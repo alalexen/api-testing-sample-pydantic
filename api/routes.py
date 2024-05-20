@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Routes(Enum):
+class Routes(str, Enum):
     OBJECTS = '/objects'
     OBJECTS_ITEM = '/objects/{}'
 

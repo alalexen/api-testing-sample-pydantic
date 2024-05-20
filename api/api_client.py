@@ -7,7 +7,7 @@ from utilities.logger_utils import logger
 class ApiClient(Client):
     """  Extension of the standard httpx client. """
     def __init__(self):
-        super().__init__(base_url=f"https://{os.getenv('RESOURCE URL')}")
+        super().__init__(base_url=f"https://{os.getenv('RESOURCE_URL')}")
 
     def request(self, method, url, **kwargs) -> Response:
         """ Extension of the httpx request method logic with added logging
@@ -17,7 +17,7 @@ class ApiClient(Client):
         :param method: the method we use (POST, GET, etc.)
         :param url: the path on the domain to which we send the request"""
 
-        if eval(os.getenv("USE LOGS")):
+        if eval(os.getenv("USE_LOGS")):
             logger.info(f'{method} {url}')
         return super().request(method, url, **kwargs)
 

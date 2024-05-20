@@ -2,7 +2,7 @@ from typing import Type
 
 from pydantic import BaseModel
 
-from utilities.files_utils import read_json_file_data, read_json_common_response_data
+from utilities.files_utils import read_json_test_data, read_json_common_response_data
 from utilities.json_utils import compare_json_left_in_right, remove_ids
 
 
@@ -148,6 +148,76 @@ def assert_left_in_right_json(response, exp_json, actual_json):
         .add_response_info() \
         .get_message()
 
+
+def assert_response_body_fields(request, response, exp_obj=None, rmv_ids=True):
+    """
+    проверяет ответ от сервера, сравнивая ожидаемый объект с полученным
+    :param request: стандартный объект request фреймворка pytest
+    :param response: ответ от сервера
+    :param exp_obj: ожидаемый объект
+    :param rmv_ids: флаг: значение True - удаляет id из тела ответа при проверке, False - не удаляет
+    """
+    exp_json = read_json_test_data(request) if exp_obj is None else exp_obj
+    act_json = remove_ids(response.json()) if rmv_ids else response.json()
+    assert_left_in_right_json(response, exp_json, act_json)
+
+
+def assert_response_body_value(response, exp, act, text=None):
+    """
+    проверяет ответ от сервера, сравнивая полученное значение с ожидаемым для тела запроса
+    :param response: ответ от сервера
+    :param exp: ожидаемое значение
+    :param act: полученное значение
+    :param text: дополнительный текст, который необходимо вывести при несовпадении exp и act
+    """
+    assert exp == act, BodyValueLogMsg(response) \
+        .add_error_info(text) \
+        .add_compare_result(exp, act) \
+        .add_request_url() \
+        .add_response_info() \
+        .get_message()
+
+
+def assert_empty_list(response):
+    """
+    проверяет, что тело ответа содержит пустой список
+    :param response: ответ от сервера
+    """
+    assert_left_in_right_json(response, [], response.json())
+
+
+def assert_bad_request(request, response):
+    """
+    проверяет, что тело ответа содержит данные BAD REQUEST
+    :param request: стандартный объект request фреймворка pytest
+    :param response: ответ от сервера
+    """
+    assert_response_body_fields(
+        request, response, exp_obj=read_json_common_response_data("bad_request_response"))
+
+
+def assert_not_found(request, response, obj_id):
+    """
+    проверяет, что тело ответа содержит данные NOT FOUND
+    :param request: стандартный объект request фреймворка pytest
+    :param response: ответ от сервера
+    :param obj_id: id объекта, который сервер не нашел
+    """
+    exp = read_json_common_response_data("not_found_obj_response")
+    exp['error'] = exp['error'].format(obj_id)
+    assert_response_body_fields(request, response, exp_obj=exp)
+
+
+def assert_not_exist(request, response, obj_id):
+    """
+    проверяет, что тело ответа содержит данные NOT EXIST
+    :param request: стандартный объект request фреймворка pytest
+    :param response: ответ от сервера
+    :param obj_id: id объекта, который сервер не нашел
+    """
+    exp = read_json_test_data(request)
+    exp['error'] = exp['error'].format(obj_id)
+    assert_response_body_fields(request, response, exp_obj=exp, rmv_ids=False)
 
 
 
